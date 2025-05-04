@@ -1,6 +1,10 @@
 ﻿open EventStore
 open Domain
+open DomainTest
 open Printer
+
+
+runTests () |> ignore
 
 let store = EventStore.initialize()
 

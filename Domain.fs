@@ -80,7 +80,7 @@ let sellFlavour (flavour,  quantity) events=
     match stock with
     | 0 ->
         [Flavour_was_not_in_stock flavour]
-    | _ when stock < quantity ->
+    | _ when stock <= quantity ->
         [Flavour_sold (flavour, stock); Flavour_went_out_of_stock flavour]
     | _ ->
         [Flavour_sold (flavour, quantity)]
