@@ -1,4 +1,5 @@
 module Printer
+open Domain
 
 let printEvents events =
     events
@@ -8,6 +9,12 @@ let printEvents events =
     events
     |> List.iteri (printfn "%d: %A")
 
-let printSoldFlavours state =
-    state
-    |> Map.iter (printfn "Sold %A: %i")
+let printSoldFlavours flavours state =
+    flavours
+    |> List.iter (fun flavour ->
+        let quantity =
+            state
+            |> getQuantity flavour
+
+        printfn "Sold %A: %i" flavour quantity
+    )
