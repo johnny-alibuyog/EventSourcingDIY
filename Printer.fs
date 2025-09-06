@@ -1,7 +1,10 @@
 module Printer
-open Domain
+open Domain.IceCream
+open EventStore
 
-let printEvents events =
+let printEvents shop events =
+    printfn "==========================================="
+    printfn "Events for shop: %s" (Aggregate.value shop)
     events
     |> List.length
     |> printfn "History (Length: %i)"
@@ -9,12 +12,15 @@ let printEvents events =
     events
     |> List.iteri (printfn "%d: %A")
 
-let printSoldFlavours flavours state =
+let printFlavourState projectionDescription shop flavours state =
+    printfn "==========================================="
+    printfn "%s %s flavours" projectionDescription (Aggregate.value shop)
+
     flavours
     |> List.iter (fun flavour ->
         let quantity =
             state
-            |> getQuantity flavour
+            |> Shop.getQuantity flavour
 
-        printfn "Sold %A: %i" flavour quantity
+        printfn "%s %A: %i" projectionDescription flavour quantity
     )

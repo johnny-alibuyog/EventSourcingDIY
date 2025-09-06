@@ -3,7 +3,7 @@
 3. Domain
 4. Event Store
 5. Projections
-6. Behaviour
+6. Behaviour (Aggregates)
 7. Testing
 
 Events are fundamental for business processes.

@@ -1,5 +1,6 @@
 module EventStore
 
+
 type EventProducer<'Event> = 
     'Event list -> 'Event list
 
@@ -8,50 +9,90 @@ type Projection<'State, 'Event> = {
     update: 'State -> 'Event -> 'State
 }
 
+type Aggregate = Aggregate of string
+
+module Aggregate =
+    let value (Aggregate v) = v
+
 type EventStore<'Event> = {
-    get: unit -> 'Event list
-    append: 'Event list -> unit
-    evolve: EventProducer<'Event> -> unit
+    get: unit -> Map<Aggregate, 'Event list>
+    getAggregateEvents: Aggregate -> 'Event list
+    append: Aggregate -> 'Event list -> unit
+    evolve: Aggregate -> EventProducer<'Event> -> unit
 }
 
 type Message<'Event> =
-    | Append of 'Event list
-    | Get of AsyncReplyChannel<'Event list>
-    | Evolve of EventProducer<'Event>
+    | Append of Aggregate * 'Event list
+    | Get of AsyncReplyChannel<Map<Aggregate, 'Event list>>
+    | GetAggregateEvents of Aggregate * AsyncReplyChannel<'Event list>
+    | Evolve of Aggregate * EventProducer<'Event>
 
 let project projection events =
     events
     |> List.fold projection.update projection.init
 
-let initialize () : EventStore<'Event> =
+let getAggregateEvents aggregate allEvents =
+    allEvents
+    |> Map.tryFind aggregate
+    |> Option.defaultValue []
+
+let init () : EventStore<'Event> =
     let mailbox: MailboxProcessor<Message<'Event>> = MailboxProcessor.Start(fun inbox ->
         let rec loop allEvents = async {
             let! message = inbox.Receive()
 
             match message with
 
-            | Append newEvents ->
-                return! loop (allEvents @ newEvents)
+            | Append (aggregate, newEvents) ->
+                let aggregateEvents = 
+                    allEvents
+                    |> getAggregateEvents aggregate
+
+                let newAllEvents = 
+                    allEvents 
+                    |> Map.add aggregate (aggregateEvents @ newEvents)
+
+                return! loop newAllEvents
 
             | Get channel ->
                 channel.Reply allEvents
+
                 return! loop allEvents
 
-            | Evolve producer ->
-                let newEvents = producer allEvents
-                return! loop (allEvents @ newEvents)
+            | GetAggregateEvents (aggregate, channel) ->
+                allEvents
+                |> getAggregateEvents aggregate
+                |> channel.Reply
+
+                return! loop allEvents
+
+            | Evolve (aggregate, producer) ->
+                let aggregateEvents = 
+                    allEvents
+                    |> getAggregateEvents aggregate
+
+                let newEvents = producer aggregateEvents
+
+                let newAllEvents = 
+                    allEvents 
+                    |> Map.add aggregate (aggregateEvents @ newEvents)
+
+                return! loop newAllEvents
         }
 
-        loop []
+        loop Map.empty
     )
 
-    let append events =
-        mailbox.Post (Append events)
+    let append aggregate events =
+        mailbox.Post (Append (aggregate, events))
 
     let get () =
         mailbox.PostAndReply Get
 
-    let evelove producer =
-        mailbox.Post (Evolve producer)
+    let getAggregateEvents aggregate =
+        mailbox.PostAndReply (fun channel -> GetAggregateEvents (aggregate, channel))
 
-    { get = get; append = append; evolve = evelove }
+    let evelove aggregate producer =
+        mailbox.Post (Evolve (aggregate, producer))
+
+    { get = get; getAggregateEvents = getAggregateEvents; append = append; evolve = evelove }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,8 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="EventStore.fs" />
-    <Compile Include="Domain.fs" />
-    <Compile Include="Domain.Test.fs" />
+    <Compile Include="./Domain/IceCream.fs" />
+    <Compile Include="./Domain/IceCreamTest.fs" />
     <Compile Include="Printer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
