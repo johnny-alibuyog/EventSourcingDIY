@@ -5,10 +5,12 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="EventStore.fs" />
+    <Compile Include="./Infrastructure/Query.fs" />
+    <Compile Include="./Infrastructure/EventStore.fs" />
     <Compile Include="./Domain/IceCream.fs" />
     <Compile Include="./Domain/IceCreamTest.fs" />
-    <Compile Include="Printer.fs" />
+    <Compile Include="./Utilities/UI.fs" />
+    <Compile Include="./Utilities/Printer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project=".paket\Paket.Restore.targets" />
